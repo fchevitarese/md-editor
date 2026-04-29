@@ -1,0 +1,39 @@
+{
+  "productName": "MD Editor",
+  "version": "0.1.0",
+  "identifier": "com.fred.md-editor",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "MD Editor",
+        "width": 1100,
+        "height": 750,
+        "minWidth": 600,
+        "minHeight": 400,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [],
+    "fileAssociations": [
+      {
+        "ext": ["md", "markdown"],
+        "name": "Markdown",
+        "description": "Markdown Document",
+        "mimeType": "text/markdown"
+      }
+    ]
+  }
+}
