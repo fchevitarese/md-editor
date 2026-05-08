@@ -96,17 +96,19 @@ pub fn run() {
 
             #[cfg(target_os = "linux")]
             {
-                // On Linux, also set the GTK window icon directly
-                // This is what the task bar / window switcher actually uses
+                // On Linux, set the GTK window icon using GIO memory stream
+                // This is what the task bar / window switcher actually reads
                 use gtk::prelude::*;
                 let window = app.get_webview_window("main").expect("main window not found");
                 let gtk_window = window.gtk_window().expect("failed to get gtk window");
-                let loader = gtk::gdk_pixbuf::PixbufLoader::new();
-                loader.write(icon_bytes).expect("failed to write icon bytes");
-                loader.close().expect("failed to close pixbuf loader");
-                if let Some(pixbuf) = loader.pixbuf() {
-                    gtk_window.set_icon(Some(&pixbuf));
-                }
+                let stream =
+                    gtk::gio::MemoryInputStream::from_bytes(&gtk::glib::Bytes::from(icon_bytes));
+                let pixbuf = gtk::gdk_pixbuf::Pixbuf::from_stream(
+                    &stream,
+                    gtk::gio::Cancellable::NONE,
+                )
+                .expect("failed to load icon pixbuf from stream");
+                gtk_window.set_icon(Some(&pixbuf));
             }
 
             Ok(())
