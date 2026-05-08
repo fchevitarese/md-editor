@@ -96,28 +96,28 @@ pub fn run() {
 
             #[cfg(target_os = "linux")]
             {
-                // On Linux, set the GTK window icon — this is what the taskbar uses.
-                // We try two approaches: from a temp file (most reliable), and from
-                // a GIO memory stream as fallback.
-                use gtk::prelude::*;
-                use std::io::Write;
+                // Defer icon setting via glib idle callback — this ensures WRY/Tauri
+                // has finished its window initialization before we set the icon.
+                // Otherwise WRY may overwrite whatever we set in setup().
+                use gtk::prelude::GtkWindowExt;
+                let icon_bytes_owned: Vec<u8> = icon_bytes.to_vec();
+                let app_handle = app.handle().clone();
 
-                let window = app.get_webview_window("main").expect("main window not found");
-                let gtk_window = window.gtk_window().expect("failed to get gtk window");
-
-                // Approach 1: write to temp file, load via from_file (most reliable)
-                let tmp_path = std::env::temp_dir().join("md-editor-icon.png");
-                let mut f = std::fs::File::create(&tmp_path)
-                    .expect("failed to create temp icon file");
-                f.write_all(icon_bytes)
-                    .expect("failed to write icon bytes to temp file");
-                f.flush().ok();
-
-                if let Ok(pixbuf) = gtk::gdk_pixbuf::Pixbuf::from_file(&tmp_path) {
-                    gtk_window.set_icon(Some(&pixbuf));
-                }
-
-                let _ = std::fs::remove_file(&tmp_path);
+                gtk::glib::idle_add(move || {
+                    let tmp_path = std::env::temp_dir().join("md-editor-icon.png");
+                    if std::fs::write(&tmp_path, &icon_bytes_owned).is_ok() {
+                        if let Ok(pixbuf) = gtk::gdk_pixbuf::Pixbuf::from_file(&tmp_path) {
+                            gtk::Window::set_default_icon(&pixbuf);
+                            if let Some(window) = app_handle.get_webview_window("main") {
+                                if let Ok(gtk_window) = window.gtk_window() {
+                                    gtk_window.set_icon(Some(&pixbuf));
+                                }
+                            }
+                        }
+                        let _ = std::fs::remove_file(&tmp_path);
+                    }
+                    gtk::glib::ControlFlow::Break
+                });
             }
 
             Ok(())
