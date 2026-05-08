@@ -96,19 +96,28 @@ pub fn run() {
 
             #[cfg(target_os = "linux")]
             {
-                // On Linux, set the GTK window icon using GIO memory stream
-                // This is what the task bar / window switcher actually reads
+                // On Linux, set the GTK window icon — this is what the taskbar uses.
+                // We try two approaches: from a temp file (most reliable), and from
+                // a GIO memory stream as fallback.
                 use gtk::prelude::*;
+                use std::io::Write;
+
                 let window = app.get_webview_window("main").expect("main window not found");
                 let gtk_window = window.gtk_window().expect("failed to get gtk window");
-                let stream =
-                    gtk::gio::MemoryInputStream::from_bytes(&gtk::glib::Bytes::from(icon_bytes));
-                let pixbuf = gtk::gdk_pixbuf::Pixbuf::from_stream(
-                    &stream,
-                    gtk::gio::Cancellable::NONE,
-                )
-                .expect("failed to load icon pixbuf from stream");
-                gtk_window.set_icon(Some(&pixbuf));
+
+                // Approach 1: write to temp file, load via from_file (most reliable)
+                let tmp_path = std::env::temp_dir().join("md-editor-icon.png");
+                let mut f = std::fs::File::create(&tmp_path)
+                    .expect("failed to create temp icon file");
+                f.write_all(icon_bytes)
+                    .expect("failed to write icon bytes to temp file");
+                f.flush().ok();
+
+                if let Ok(pixbuf) = gtk::gdk_pixbuf::Pixbuf::from_file(&tmp_path) {
+                    gtk_window.set_icon(Some(&pixbuf));
+                }
+
+                let _ = std::fs::remove_file(&tmp_path);
             }
 
             Ok(())
