@@ -83,6 +83,34 @@ fn save_session(app: tauri::AppHandle, session: Session) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // Embed the PNG icon bytes at compile time
+            let icon_bytes = include_bytes!("../icons/icon.png");
+
+            // Set the icon via Tauri's API (works for title bar on all platforms)
+            if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
+                let _ = app
+                    .get_webview_window("main")
+                    .and_then(|w| w.set_icon(icon).ok());
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                // On Linux, also set the GTK window icon directly
+                // This is what the task bar / window switcher actually uses
+                use gtk::prelude::*;
+                let window = app.get_webview_window("main").expect("main window not found");
+                let gtk_window = window.gtk_window().expect("failed to get gtk window");
+                let loader = gtk::gdk_pixbuf::PixbufLoader::new();
+                loader.write(icon_bytes).expect("failed to write icon bytes");
+                loader.close().expect("failed to close pixbuf loader");
+                if let Some(pixbuf) = loader.pixbuf() {
+                    gtk_window.set_icon(Some(&pixbuf));
+                }
+            }
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             read_file, write_file, get_opened_file, read_dir,
             load_session, save_session
