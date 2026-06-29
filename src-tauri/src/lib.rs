@@ -96,28 +96,29 @@ pub fn run() {
 
             #[cfg(target_os = "linux")]
             {
-                // Defer icon setting via glib idle callback — this ensures WRY/Tauri
-                // has finished its window initialization before we set the icon.
-                // Otherwise WRY may overwrite whatever we set in setup().
-                use gtk::prelude::GtkWindowExt;
-                let icon_bytes_owned: Vec<u8> = icon_bytes.to_vec();
-                let app_handle = app.handle().clone();
+                use gtk::prelude::*;
 
-                gtk::glib::idle_add(move || {
-                    let tmp_path = std::env::temp_dir().join("md-editor-icon.png");
-                    if std::fs::write(&tmp_path, &icon_bytes_owned).is_ok() {
-                        if let Ok(pixbuf) = gtk::gdk_pixbuf::Pixbuf::from_file(&tmp_path) {
+                // Decode pixbuf from embedded PNG bytes now (sync, no window needed)
+                match gtk::gdk_pixbuf::Pixbuf::from_read(std::io::Cursor::new(icon_bytes.to_vec())) {
+                    Ok(pixbuf) => {
+                        let app_handle = app.handle().clone();
+
+                        // Defer GTK window icon calls until WRY/Tauri finishes
+                        // initializing the window.
+                        gtk::glib::idle_add_local(move || {
                             gtk::Window::set_default_icon(&pixbuf);
                             if let Some(window) = app_handle.get_webview_window("main") {
                                 if let Ok(gtk_window) = window.gtk_window() {
                                     gtk_window.set_icon(Some(&pixbuf));
                                 }
                             }
-                        }
-                        let _ = std::fs::remove_file(&tmp_path);
+                            gtk::glib::ControlFlow::Break
+                        });
                     }
-                    gtk::glib::ControlFlow::Break
-                });
+                    Err(e) => {
+                        eprintln!("md-editor: failed to load icon: {e}");
+                    }
+                }
             }
 
             Ok(())
