@@ -83,6 +83,46 @@ fn save_session(app: tauri::AppHandle, session: Session) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .setup(|app| {
+            // Embed the PNG icon bytes at compile time
+            let icon_bytes = include_bytes!("../icons/icon.png");
+
+            // Set the icon via Tauri's API (works for title bar on all platforms)
+            if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
+                let _ = app
+                    .get_webview_window("main")
+                    .and_then(|w| w.set_icon(icon).ok());
+            }
+
+            #[cfg(target_os = "linux")]
+            {
+                use gtk::prelude::*;
+
+                // Decode pixbuf from embedded PNG bytes now (sync, no window needed)
+                match gtk::gdk_pixbuf::Pixbuf::from_read(std::io::Cursor::new(icon_bytes.to_vec())) {
+                    Ok(pixbuf) => {
+                        let app_handle = app.handle().clone();
+
+                        // Defer GTK window icon calls until WRY/Tauri finishes
+                        // initializing the window.
+                        gtk::glib::idle_add_local(move || {
+                            gtk::Window::set_default_icon(&pixbuf);
+                            if let Some(window) = app_handle.get_webview_window("main") {
+                                if let Ok(gtk_window) = window.gtk_window() {
+                                    gtk_window.set_icon(Some(&pixbuf));
+                                }
+                            }
+                            gtk::glib::ControlFlow::Break
+                        });
+                    }
+                    Err(e) => {
+                        eprintln!("md-editor: failed to load icon: {e}");
+                    }
+                }
+            }
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             read_file, write_file, get_opened_file, read_dir,
             load_session, save_session
