@@ -1,8 +1,41 @@
-# md-editor
+# MD Editor
 
-A lightweight WYSIWYG Markdown editor for Linux, built with [Tauri](https://tauri.app/) + [TipTap](https://tiptap.dev/).
+[![Release](https://img.shields.io/github/v/release/fchevitarese/md-editor)](https://github.com/fchevitarese/md-editor/releases)
+[![License](https://img.shields.io/github/license/fchevitarese/md-editor)](LICENSE)
+
+A lightweight WYSIWYG Markdown editor, built with [Tauri](https://tauri.app/) + [TipTap](https://tiptap.dev/).
 
 Opens `.md` files rendered — no raw syntax visible unless you want it. Edit visually, save as clean Markdown.
+
+![Editor screenshot](screenshots/editor.png)
+
+## Install
+
+### Ubuntu / Debian / Linux Mint
+
+Download the `.deb` from [Releases](https://github.com/fchevitarese/md-editor/releases):
+
+```bash
+sudo dpkg -i MD Editor_*.deb
+```
+
+### Fedora / RHEL
+
+Download the `.rpm` from [Releases](https://github.com/fchevitarese/md-editor/releases):
+
+```bash
+sudo rpm -i MD Editor-*.rpm
+```
+
+### Windows
+
+Download the `.exe` (NSIS installer) or `.msi` from [Releases](https://github.com/fchevitarese/md-editor/releases).
+
+### Flatpak (coming soon)
+
+```bash
+flatpak install flathub com.fred.md-editor
+```
 
 ## Features
 
@@ -44,7 +77,7 @@ npm run tauri dev
 npm run tauri build
 ```
 
-The binary and `.deb` / `.AppImage` packages will be in `src-tauri/target/release/bundle/`.
+The binary and `.deb` / `.rpm` packages will be in `src-tauri/target/release/bundle/`.
 
 ## Tech stack
 

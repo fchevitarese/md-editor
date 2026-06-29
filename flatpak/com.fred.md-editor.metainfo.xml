@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.fred.md-editor</id>
+  <name>MD Editor</name>
+  <summary>A WYSIWYG Markdown editor</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>A lightweight WYSIWYG Markdown editor for Linux, built with Tauri and TipTap.</p>
+    <p>Opens .md files rendered — no raw syntax visible unless you want it. Edit visually, save as clean Markdown.</p>
+  </description>
+  <launchable type="desktop-id">com.fred.md-editor.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/fchevitarese/md-editor/main/screenshots/editor.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/fchevitarese/md-editor/main/screenshots/split-view.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/fchevitarese/md-editor</url>
+  <releases>
+    <release version="0.1.0" date="2026-06-29"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

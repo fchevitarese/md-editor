@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=MD Editor
+Comment=A WYSIWYG Markdown editor
+Exec=md-editor
+Icon=com.fred.md-editor
+Categories=Office;TextEditor;
+Terminal=false
+MimeType=text/markdown;
