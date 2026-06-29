@@ -107,7 +107,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/linux/*.deb
-            dist/linux/*.rpm
-            dist/windows/*.exe
-            dist/windows/*.msi
+            dist/**/*.deb
+            dist/**/*.rpm
+            dist/**/*.exe
+            dist/**/*.msi
