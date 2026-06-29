@@ -11,25 +11,24 @@ Opens `.md` files rendered — no raw syntax visible unless you want it. Edit vi
 
 ## Install
 
-### Ubuntu / Debian / Linux Mint
+### Linux
 
-Download the `.deb` from [Releases](https://github.com/fchevitarese/md-editor/releases):
-
-```bash
-sudo dpkg -i MD Editor_*.deb
-```
-
-### Fedora / RHEL
-
-Download the `.rpm` from [Releases](https://github.com/fchevitarese/md-editor/releases):
+Download the `.deb`, `.rpm`, or the standalone binary `md-editor` from [Releases](https://github.com/fchevitarese/md-editor/releases):
 
 ```bash
-sudo rpm -i MD Editor-*.rpm
+# Debian/Ubuntu/Mint
+sudo dpkg -i MD.Editor_*.deb
+
+# Fedora/RHEL
+sudo rpm -i MD.Editor-*.rpm
+
+# Or just run the portable binary (no install needed)
+chmod +x md-editor && ./md-editor
 ```
 
 ### Windows
 
-Download the `.exe` (NSIS installer) or `.msi` from [Releases](https://github.com/fchevitarese/md-editor/releases).
+Download the `.exe` installer, `.msi`, or the portable `md-editor.exe` from [Releases](https://github.com/fchevitarese/md-editor/releases).
 
 ### Flatpak (coming soon)
 
