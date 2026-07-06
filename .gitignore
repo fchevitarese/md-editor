@@ -6,3 +6,4 @@ flatpak/build-dir/
 flatpak/.flatpak-builder/
 flatpak/node-sources.json
 flatpak/cargo-sources.json
+test-results/

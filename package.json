@@ -7,17 +7,21 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-opener": "^2.5.4",
     "@tiptap/extension-link": "^2",
+    "@tiptap/extension-placeholder": "^2",
     "@tiptap/extension-table": "^2",
     "@tiptap/extension-table-cell": "^2",
     "@tiptap/extension-table-header": "^2",
     "@tiptap/extension-table-row": "^2",
-    "@tiptap/extension-placeholder": "^2",
     "@tiptap/extension-task-item": "^2",
     "@tiptap/extension-task-list": "^2",
     "@tiptap/react": "^2",
@@ -29,11 +33,19 @@
     "tiptap-markdown": "^0.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tauri-apps/cli": "^2",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@vitejs/plugin-react": "^4",
+    "happy-dom": "^20.10.6",
+    "jsdom": "^29.1.1",
     "typescript": "^5",
-    "vite": "^8.0.10"
+    "vite": "^8.0.10",
+    "vitest": "^4.1.10"
   }
 }

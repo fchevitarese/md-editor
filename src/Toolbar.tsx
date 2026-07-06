@@ -3,13 +3,19 @@ import {
   Bold, Italic, Strikethrough, Code, Code2,
   Heading1, Heading2, Heading3,
   List, ListOrdered, ListChecks,
-  Quote, Link2, Minus,
+  Quote, Link2, Minus as HRule,
   Undo2, Redo2, Save, Printer,
   PanelLeft, Eye, AlignLeft,
+  Plus, Minus, Map,
 } from "lucide-react";
 import type { Editor } from "@tiptap/react";
 
 export type ViewMode = "wysiwyg" | "split" | "preview";
+
+interface Preferences {
+  font_size: number;
+  show_minimap: boolean;
+}
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -17,6 +23,8 @@ interface ToolbarProps {
   onViewModeChange: (mode: ViewMode) => void;
   onSave: () => void;
   onPrint: () => void;
+  prefs: Preferences;
+  onPrefsChange: (prefs: Preferences) => void;
 }
 
 function Sep() {
@@ -44,7 +52,7 @@ function Btn({
   );
 }
 
-export default function Toolbar({ editor, viewMode, onViewModeChange, onSave, onPrint }: ToolbarProps) {
+export default function Toolbar({ editor, viewMode, onViewModeChange, onSave, onPrint, prefs, onPrefsChange }: ToolbarProps) {
   const wysiwyg = viewMode === "wysiwyg";
   const sz = 15;
 
@@ -57,7 +65,7 @@ export default function Toolbar({ editor, viewMode, onViewModeChange, onSave, on
 
   return (
     <div className="toolbar">
-      {/* Formatting — only active in WYSIWYG */}
+      {/* Formatting */}
       <Btn onClick={() => editor?.chain().focus().toggleBold().run()} active={wysiwyg && !!editor?.isActive("bold")} disabled={!wysiwyg} title="Bold (Ctrl+B)">
         <Bold size={sz} />
       </Btn>
@@ -107,7 +115,7 @@ export default function Toolbar({ editor, viewMode, onViewModeChange, onSave, on
         <Link2 size={sz} />
       </Btn>
       <Btn onClick={() => editor?.chain().focus().setHorizontalRule().run()} disabled={!wysiwyg} title="Horizontal rule">
-        <Minus size={sz} />
+        <HRule size={sz} />
       </Btn>
 
       <Sep />
@@ -121,6 +129,36 @@ export default function Toolbar({ editor, viewMode, onViewModeChange, onSave, on
 
       {/* Spacer */}
       <span style={{ flex: 1 }} />
+
+      {/* Font size controls */}
+      <Btn
+        onClick={() => onPrefsChange({ ...prefs, font_size: Math.max(prefs.font_size - 1, 10) })}
+        disabled={prefs.font_size <= 10}
+        title="Decrease font size (Ctrl+-)"
+      >
+        <Minus size={12} />
+      </Btn>
+      <span className="font-size-label">{prefs.font_size}</span>
+      <Btn
+        onClick={() => onPrefsChange({ ...prefs, font_size: Math.min(prefs.font_size + 1, 32) })}
+        disabled={prefs.font_size >= 32}
+        title="Increase font size (Ctrl++)"
+      >
+        <Plus size={12} />
+      </Btn>
+
+      <Sep />
+
+      {/* Minimap toggle */}
+      <Btn
+        onClick={() => onPrefsChange({ ...prefs, show_minimap: !prefs.show_minimap })}
+        active={prefs.show_minimap}
+        title="Toggle minimap"
+      >
+        <Map size={sz} />
+      </Btn>
+
+      <Sep />
 
       {/* View mode */}
       <Btn onClick={() => onViewModeChange("wysiwyg")} active={viewMode === "wysiwyg"} title="WYSIWYG">

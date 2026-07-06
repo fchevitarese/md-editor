@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import Editor from "./Editor";
 import Sidebar from "./Sidebar";
@@ -7,6 +8,12 @@ import Sidebar from "./Sidebar";
 interface Session {
   file_path?: string | null;
   dir_path?: string | null;
+  scroll_positions?: Record<string, number>;
+}
+
+interface Preferences {
+  font_size: number;
+  show_minimap: boolean;
 }
 
 export default function App() {
@@ -15,32 +22,10 @@ export default function App() {
   const [fileName, setFileName] = useState("Untitled.md");
   const [dirty, setDirty] = useState(false);
   const [dirPath, setDirPath] = useState<string | null>(null);
+  const [scrollPositions, setScrollPositions] = useState<Record<string, number>>({});
+  const [prefs, setPrefs] = useState<Preferences>({ font_size: 16, show_minimap: true });
   const sessionSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Restore session on mount
-  useEffect(() => {
-    invoke<string | null>("get_opened_file").then((cliFile) => {
-      if (cliFile) {
-        loadFile(cliFile);
-        return;
-      }
-      invoke<Session>("load_session").then((s) => {
-        if (s.dir_path) setDirPath(s.dir_path);
-        if (s.file_path) loadFile(s.file_path);
-      });
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Persist session (debounced 1s)
-  useEffect(() => {
-    if (sessionSaveTimer.current) clearTimeout(sessionSaveTimer.current);
-    sessionSaveTimer.current = setTimeout(() => {
-      invoke("save_session", {
-        session: { file_path: filePath, dir_path: dirPath },
-      });
-    }, 1000);
-  }, [filePath, dirPath]);
+  const osFileOpened = useRef(false);
 
   const loadFile = useCallback(async (path: string) => {
     const text = await invoke<string>("read_file", { path });
@@ -49,6 +34,57 @@ export default function App() {
     setFileName(path.split("/").pop() ?? path);
     setDirty(false);
   }, []);
+
+  const handleScrollPosition = useCallback((scrollTop: number) => {
+    if (!filePath) return;
+    setScrollPositions(prev => ({ ...prev, [filePath]: scrollTop }));
+    invoke("save_scroll_position", { filePath, scrollTop });
+  }, [filePath]);
+
+  const handlePrefsChange = useCallback((newPrefs: Preferences) => {
+    setPrefs(newPrefs);
+    invoke("save_preferences", { prefs: newPrefs });
+  }, []);
+
+  // Load preferences on mount
+  useEffect(() => {
+    invoke<Preferences>("load_preferences").then((p) => {
+      if (p) setPrefs(p);
+    });
+  }, []);
+
+  // Listen for file-open events + restore session
+  useEffect(() => {
+    const unlisten = listen<string>("file-open", (event) => {
+      osFileOpened.current = true;
+      loadFile(event.payload);
+    });
+
+    invoke<Session>("load_session").then((s) => {
+      if (s.dir_path) setDirPath(s.dir_path);
+      if (s.scroll_positions) setScrollPositions(s.scroll_positions);
+      if (s.file_path && !osFileOpened.current) {
+        loadFile(s.file_path);
+      }
+    });
+
+    return () => { unlisten.then((fn) => fn()); };
+  }, [loadFile]);
+
+  // Persist session (debounced 1s)
+  useEffect(() => {
+    if (sessionSaveTimer.current) clearTimeout(sessionSaveTimer.current);
+    sessionSaveTimer.current = setTimeout(() => {
+      invoke("save_session", {
+        session: { file_path: filePath, dir_path: dirPath, scroll_positions: scrollPositions },
+      });
+    }, 1000);
+  }, [filePath, dirPath, scrollPositions]);
+
+  // Apply font size CSS variable
+  useEffect(() => {
+    document.documentElement.style.setProperty("--editor-font-size", `${prefs.font_size}px`);
+  }, [prefs.font_size]);
 
   const handleOpenFile = useCallback(async () => {
     const selected = await open({
@@ -111,9 +147,14 @@ export default function App() {
         )}
         <Editor
           key={filePath ?? "__new__"}
+          filePath={filePath}
           initialContent={content}
+          initialScrollTop={filePath ? scrollPositions[filePath] : undefined}
+          prefs={prefs}
+          onPrefsChange={handlePrefsChange}
           onSave={handleSave}
           onDirty={() => setDirty(true)}
+          onScrollPosition={handleScrollPosition}
         />
       </div>
     </div>
