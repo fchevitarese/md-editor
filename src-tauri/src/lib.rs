@@ -4,12 +4,32 @@ use tauri::{Emitter, Manager};
 
 #[tauri::command]
 fn read_file(path: String) -> Result<String, String> {
-    fs::read_to_string(&path).map_err(|e| e.to_string())
+    eprintln!("[md-editor::read_file] path={path}");
+    match fs::read_to_string(&path) {
+        Ok(content) => {
+            eprintln!("[md-editor::read_file] OK, {} chars", content.len());
+            Ok(content)
+        }
+        Err(e) => {
+            eprintln!("[md-editor::read_file] ERROR: {e}");
+            Err(e.to_string())
+        }
+    }
 }
 
 #[tauri::command]
 fn write_file(path: String, content: String) -> Result<(), String> {
-    fs::write(&path, content).map_err(|e| e.to_string())
+    eprintln!("[md-editor::write_file] path={path}, {} chars", content.len());
+    match fs::write(&path, &content) {
+        Ok(()) => {
+            eprintln!("[md-editor::write_file] OK");
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("[md-editor::write_file] ERROR: {e}");
+            Err(e.to_string())
+        }
+    }
 }
 
 #[derive(serde::Serialize)]
@@ -21,7 +41,11 @@ struct FileNode {
 
 #[tauri::command]
 fn read_dir(path: String) -> Result<Vec<FileNode>, String> {
-    let entries = fs::read_dir(&path).map_err(|e| e.to_string())?;
+    eprintln!("[md-editor::read_dir] path={path}");
+    let entries = fs::read_dir(&path).map_err(|e| {
+        eprintln!("[md-editor::read_dir] ERROR: {e}");
+        e.to_string()
+    })?;
     let mut nodes: Vec<FileNode> = entries
         .filter_map(|e| e.ok())
         .filter(|e| !e.file_name().to_string_lossy().starts_with('.'))
@@ -39,12 +63,14 @@ fn read_dir(path: String) -> Result<Vec<FileNode>, String> {
             .cmp(&a.is_dir)
             .then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
     });
+    eprintln!("[md-editor::read_dir] OK, {} entries", nodes.len());
     Ok(nodes)
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 struct Session {
-    file_path: Option<String>,
+    open_files: Vec<String>,
+    active_file: Option<String>,
     dir_path: Option<String>,
     scroll_positions: HashMap<String, f64>,
 }
@@ -66,6 +92,14 @@ impl Default for Preferences {
     }
 }
 
+// Store the initial file path from CLI args so frontend can retrieve it reliably.
+static INITIAL_FILE_PATH: std::sync::OnceLock<std::string::String> = std::sync::OnceLock::new();
+
+#[tauri::command]
+fn get_initial_file_path() -> Option<String> {
+    INITIAL_FILE_PATH.get().cloned()
+}
+
 fn data_dir(app: &tauri::AppHandle) -> std::path::PathBuf {
     app.path()
         .app_config_dir()
@@ -83,20 +117,33 @@ fn prefs_file(app: &tauri::AppHandle) -> std::path::PathBuf {
 #[tauri::command]
 fn load_session(app: tauri::AppHandle) -> Session {
     let path = session_file(&app);
-    fs::read_to_string(path)
+    eprintln!("[md-editor::load_session] path={}", path.display());
+    let session: Session = fs::read_to_string(&path)
         .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    eprintln!("[md-editor::load_session] OK, {} open files", session.open_files.len());
+    session
 }
 
 #[tauri::command]
 fn save_session(app: tauri::AppHandle, session: Session) -> Result<(), String> {
+    eprintln!("[md-editor::save_session] {} open files, active={:?}", session.open_files.len(), session.active_file);
     let path = session_file(&app);
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+        fs::create_dir_all(parent).map_err(|e| {
+            eprintln!("[md-editor::save_session] ERROR creating dir: {e}");
+            e.to_string()
+        })?;
     }
-    let json = serde_json::to_string(&session).map_err(|e| e.to_string())?;
-    fs::write(path, json).map_err(|e| e.to_string())
+    let json = serde_json::to_string(&session).map_err(|e| {
+        eprintln!("[md-editor::save_session] ERROR serializing: {e}");
+        e.to_string()
+    })?;
+    fs::write(&path, &json).map_err(|e| {
+        eprintln!("[md-editor::save_session] ERROR writing: {e}");
+        e.to_string()
+    })
 }
 
 #[tauri::command]
@@ -135,17 +182,21 @@ fn save_preferences(app: tauri::AppHandle, prefs: Preferences) -> Result<(), Str
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    eprintln!("[md-editor] starting...");
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            eprintln!("[md-editor] second instance detected, args: {:?}", args);
             // When a second instance is launched (e.g. double-click .md file
             // while app is already open), emit the file path to the frontend.
             if let Some(path) = args.iter().nth(1) {
+                eprintln!("[md-editor] emitting file-open: {path}");
                 let _ = app.emit("file-open", path);
             }
         }))
         .setup(|app| {
+            eprintln!("[md-editor] setup: loading icon...");
             let icon_bytes = include_bytes!("../icons/icon.png");
 
             if let Ok(icon) = tauri::image::Image::from_bytes(icon_bytes) {
@@ -154,13 +205,10 @@ pub fn run() {
                     .and_then(|w| w.set_icon(icon).ok());
             }
 
-            // On first launch, check CLI arg for file path
+            // On first launch, store CLI arg for file path (frontend retrieves via command)
             if let Some(path) = std::env::args().nth(1) {
-                let handle = app.handle().clone();
-                std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_millis(100));
-                    let _ = handle.emit("file-open", &path);
-                });
+                eprintln!("[md-editor] setup: initial file path from CLI: {path}");
+                let _ = INITIAL_FILE_PATH.set(path.to_string());
             }
 
             #[cfg(target_os = "linux")]
@@ -183,6 +231,7 @@ pub fn run() {
                 }
             }
 
+            eprintln!("[md-editor] setup: done");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -193,7 +242,8 @@ pub fn run() {
             save_session,
             save_scroll_position,
             load_preferences,
-            save_preferences
+            save_preferences,
+            get_initial_file_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

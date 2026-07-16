@@ -43,6 +43,7 @@ html, body, #root { height: 100%; background: var(--bg); color: var(--text); }
   background: var(--toolbar-bg);
   border-bottom: 1px solid var(--toolbar-border);
   user-select: none;
+  flex-shrink: 0;
 }
 
 .filename {
@@ -70,6 +71,76 @@ html, body, #root { height: 100%; background: var(--bg); color: var(--text); }
   transition: background 0.1s, color 0.1s;
 }
 .btn-icon:hover { background: var(--toolbar-btn-hover-bg); color: var(--toolbar-btn-hover); }
+
+/* ── Tab Bar ──────────────────────────────────── */
+.tabbar-container {
+  flex-shrink: 0;
+  background: #2a2a2a;
+  border-bottom: 1px solid var(--toolbar-border);
+}
+
+.tabbar {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 34px;
+  scrollbar-width: none;
+}
+.tabbar::-webkit-scrollbar { display: none; }
+
+.tab-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  min-width: 0;
+  max-width: 180px;
+  height: 100%;
+  font-size: 12px;
+  color: #999;
+  background: transparent;
+  border-right: 1px solid #333;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.1s, color 0.1s;
+  flex-shrink: 0;
+}
+.tab-item:hover { background: #333; color: #ddd; }
+.tab-item.tab-item--active {
+  background: #1e1e1e;
+  color: #fff;
+  border-bottom: 2px solid var(--accent);
+}
+
+.tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.tab-dirty { color: #fff; }
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: #999;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.1s, background 0.1s, color 0.1s;
+}
+.tab-item:hover .tab-close,
+.tab-item--active .tab-close { opacity: 1; }
+.tab-close:hover { background: #555; color: #fff; }
 
 /* ── Sidebar ──────────────────────────────────── */
 .sidebar {
@@ -123,7 +194,15 @@ html, body, #root { height: 100%; background: var(--bg); color: var(--text); }
 
 .tree-chevron { width: 12px; font-size: 9px; color: var(--sidebar-muted); flex-shrink: 0; }
 .tree-file-icon { font-size: 12px; flex-shrink: 0; }
-.tree-label { overflow: hidden; text-overflow: ellipsis; }
+.tree-label { overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+.tree-open-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-left: auto;
+}
 
 /* ── Toolbar ──────────────────────────────────── */
 .toolbar {

@@ -25,7 +25,7 @@ describe("Sidebar", () => {
 
   it("renders root folder name", async () => {
     render(
-      <Sidebar rootPath="/app" activeFile={null} onFileClick={vi.fn()} />
+      <Sidebar rootPath="/app" activeFile={null} openFiles={[]} onFileClick={vi.fn()} />
     );
     await waitFor(() => {
       expect(screen.getByText("APP")).toBeInTheDocument();
@@ -34,7 +34,7 @@ describe("Sidebar", () => {
 
   it("renders file nodes from invoke", async () => {
     render(
-      <Sidebar rootPath="/app" activeFile={null} onFileClick={vi.fn()} />
+      <Sidebar rootPath="/app" activeFile={null} openFiles={[]} onFileClick={vi.fn()} />
     );
     await waitFor(() => {
       expect(screen.getByText("readme.md")).toBeInTheDocument();
@@ -48,6 +48,7 @@ describe("Sidebar", () => {
       <Sidebar
         rootPath="/app"
         activeFile="/app/readme.md"
+        openFiles={[]}
         onFileClick={vi.fn()}
       />
     );
@@ -60,7 +61,7 @@ describe("Sidebar", () => {
   it("calls onFileClick when a file is clicked", async () => {
     const onFileClick = vi.fn();
     render(
-      <Sidebar rootPath="/app" activeFile={null} onFileClick={onFileClick} />
+      <Sidebar rootPath="/app" activeFile={null} openFiles={[]} onFileClick={onFileClick} />
     );
     await waitFor(() => {
       expect(screen.getByText("readme.md")).toBeInTheDocument();
@@ -77,7 +78,7 @@ describe("Sidebar", () => {
     mockInvoke.mockResolvedValueOnce(childNodes); // expand docs
 
     render(
-      <Sidebar rootPath="/app" activeFile={null} onFileClick={vi.fn()} />
+      <Sidebar rootPath="/app" activeFile={null} openFiles={[]} onFileClick={vi.fn()} />
     );
     await waitFor(() => {
       expect(screen.getByText("docs")).toBeInTheDocument();
@@ -94,14 +95,14 @@ describe("Sidebar", () => {
     // Don't resolve the mock yet
     mockInvoke.mockReturnValue(new Promise(() => {}));
     render(
-      <Sidebar rootPath="/app" activeFile={null} onFileClick={vi.fn()} />
+      <Sidebar rootPath="/app" activeFile={null} openFiles={[]} onFileClick={vi.fn()} />
     );
     expect(screen.getByText("Loading…")).toBeInTheDocument();
   });
 
   it("reloads when rootPath changes", async () => {
     const { rerender } = render(
-      <Sidebar rootPath="/app" activeFile={null} onFileClick={vi.fn()} />
+      <Sidebar rootPath="/app" activeFile={null} openFiles={[]} onFileClick={vi.fn()} />
     );
     await waitFor(() => {
       expect(screen.getByText("APP")).toBeInTheDocument();
@@ -113,7 +114,7 @@ describe("Sidebar", () => {
     mockInvoke.mockResolvedValue(newNodes);
 
     rerender(
-      <Sidebar rootPath="/other" activeFile={null} onFileClick={vi.fn()} />
+      <Sidebar rootPath="/other" activeFile={null} openFiles={[]} onFileClick={vi.fn()} />
     );
     await waitFor(() => {
       expect(screen.getByText("OTHER")).toBeInTheDocument();

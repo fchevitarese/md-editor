@@ -29,7 +29,7 @@ interface EditorProps {
   prefs: Preferences;
   onPrefsChange: (prefs: Preferences) => void;
   onSave: (markdown: string) => void;
-  onDirty: () => void;
+  onContentChange: (content: string) => void;
   onScrollPosition: (scrollTop: number) => void;
 }
 
@@ -40,7 +40,7 @@ export default function Editor({
   prefs,
   onPrefsChange,
   onSave,
-  onDirty,
+  onContentChange,
   onScrollPosition,
 }: EditorProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("wysiwyg");
@@ -48,10 +48,11 @@ export default function Editor({
   const [scrollState, setScrollState] = useState({ scrollTop: 0, scrollHeight: 0, clientHeight: 0 });
   const viewModeRef = useRef(viewMode);
   viewModeRef.current = viewMode;
-  const onDirtyRef = useRef(onDirty);
-  onDirtyRef.current = onDirty;
+  const onContentChangeRef = useRef(onContentChange);
+  onContentChangeRef.current = onContentChange;
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitialContentSet = useRef(true);
 
   const editor = useEditor({
     extensions: [
@@ -67,12 +68,33 @@ export default function Editor({
       TableCell,
     ],
     content: initialContent,
-    onUpdate: () => {
-      onDirtyRef.current();
+    onUpdate: ({ editor }) => {
+      if (!isInitialContentSet.current) {
+        onContentChangeRef.current(editor.storage.markdown.getMarkdown());
+      }
     },
     onCreate: () => {},
     editorProps: { attributes: { class: "prose-content" } },
   });
+
+  // Switch editor content when file changes (avoids full destroy/recreate)
+  useEffect(() => {
+    if (!editor) {
+      console.warn("[md-editor] Editor: filePath changed but editor is null");
+      return;
+    }
+    console.log("[md-editor] Editor: loading content for", filePath, initialContent.length, "chars");
+    isInitialContentSet.current = true;
+    setRawMarkdown(initialContent);
+    try {
+      editor.commands.setContent(initialContent);
+    } catch (err) {
+      console.error("[md-editor] Editor: setContent failed:", err);
+    }
+    queueMicrotask(() => {
+      isInitialContentSet.current = false;
+    });
+  }, [filePath, editor]);
 
   // Restore scroll position when file changes
   useEffect(() => {
@@ -180,7 +202,7 @@ export default function Editor({
               <textarea
                 className="raw-textarea"
                 value={rawMarkdown}
-                onChange={(e) => { setRawMarkdown(e.target.value); onDirty(); }}
+                onChange={(e) => { setRawMarkdown(e.target.value); onContentChange(e.target.value); }}
                 spellCheck={false}
               />
             </div>

@@ -19,10 +19,11 @@ interface TreeNodeProps {
   node: FileNode;
   depth: number;
   activeFile: string | null;
+  openFiles: string[];
   onFileClick: (path: string) => void;
 }
 
-function TreeNode({ node, depth, activeFile, onFileClick }: TreeNodeProps) {
+function TreeNode({ node, depth, activeFile, openFiles, onFileClick }: TreeNodeProps) {
   const [expanded, setExpanded] = useState(false);
   const [children, setChildren] = useState<FileNode[] | null>(null);
 
@@ -39,6 +40,7 @@ function TreeNode({ node, depth, activeFile, onFileClick }: TreeNodeProps) {
   }, [node, expanded, children, onFileClick]);
 
   const isActive = !node.is_dir && activeFile === node.path;
+  const isOpen = !node.is_dir && openFiles.includes(node.path);
 
   return (
     <div>
@@ -54,7 +56,10 @@ function TreeNode({ node, depth, activeFile, onFileClick }: TreeNodeProps) {
         <span className="tree-file-icon">
           {node.is_dir ? (expanded ? "📂" : "📁") : fileIcon(node.name)}
         </span>
-        <span className="tree-label">{node.name}</span>
+        <span className="tree-label">
+          {node.name}
+          {isOpen && !isActive && <span className="tree-open-dot" />}
+        </span>
       </div>
       {expanded &&
         children?.map((child) => (
@@ -63,6 +68,7 @@ function TreeNode({ node, depth, activeFile, onFileClick }: TreeNodeProps) {
             node={child}
             depth={depth + 1}
             activeFile={activeFile}
+            openFiles={openFiles}
             onFileClick={onFileClick}
           />
         ))}
@@ -73,10 +79,11 @@ function TreeNode({ node, depth, activeFile, onFileClick }: TreeNodeProps) {
 interface SidebarProps {
   rootPath: string;
   activeFile: string | null;
+  openFiles: string[];
   onFileClick: (path: string) => void;
 }
 
-export default function Sidebar({ rootPath, activeFile, onFileClick }: SidebarProps) {
+export default function Sidebar({ rootPath, activeFile, openFiles, onFileClick }: SidebarProps) {
   const [nodes, setNodes] = useState<FileNode[] | null>(null);
   const rootName = rootPath.split("/").pop() ?? rootPath;
 
@@ -103,6 +110,7 @@ export default function Sidebar({ rootPath, activeFile, onFileClick }: SidebarPr
               node={node}
               depth={0}
               activeFile={activeFile}
+              openFiles={openFiles}
               onFileClick={onFileClick}
             />
           ))
