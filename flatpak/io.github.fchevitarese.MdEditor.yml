@@ -49,8 +49,8 @@ modules:
       # build, swap this block for:  - type: dir / path: ..
       - type: git
         url: https://github.com/fchevitarese/md-editor.git
-        tag: v0.3.0
-        commit: 89dfcba459d82a94150509f0146bc9c4faa87fa7
+        tag: v0.3.1
+        commit: 1070d2ca714ba7800df80a993968355c1a677776
 
       # Generated with flatpak-builder-tools, regenerate on every dependency bump:
       #   flatpak-node-generator npm package-lock.json -o flatpak/node-sources.json
