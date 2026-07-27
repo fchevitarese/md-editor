@@ -50,7 +50,7 @@ modules:
       - type: git
         url: https://github.com/fchevitarese/md-editor.git
         tag: v0.3.0
-        commit: FILL_WITH_TAG_SHA
+        commit: 89dfcba459d82a94150509f0146bc9c4faa87fa7
 
       # Generated with flatpak-builder-tools, regenerate on every dependency bump:
       #   flatpak-node-generator npm package-lock.json -o flatpak/node-sources.json
