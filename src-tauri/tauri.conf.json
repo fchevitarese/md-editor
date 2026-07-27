@@ -1,7 +1,7 @@
 {
   "productName": "MD Editor",
-  "version": "0.1.0",
-  "identifier": "com.fred.md-editor",
+  "version": "0.3.0",
+  "identifier": "io.github.fchevitarese.MdEditor",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",

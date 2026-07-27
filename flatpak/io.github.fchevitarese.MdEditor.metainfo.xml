@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.fchevitarese.MdEditor</id>
+  <name>MD Editor</name>
+  <summary>Edit Markdown without seeing the syntax</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <developer id="io.github.fchevitarese">
+    <name>Frederico Chevitarese</name>
+  </developer>
+
+  <description>
+    <p>
+      MD Editor is a lightweight WYSIWYG Markdown editor for Linux. It opens .md files
+      already rendered, so you read and write formatted text instead of raw syntax, and
+      everything is still saved as plain, clean Markdown on disk.
+    </p>
+    <p>
+      The raw source is never more than one click away: switch to split view to see
+      Markdown and preview side by side, or to preview mode for reading.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>WYSIWYG, split and preview modes</li>
+      <li>Tabs with session restore, and reopen of recently closed tabs</li>
+      <li>Folder sidebar for browsing a project's Markdown files</li>
+      <li>Document minimap and adjustable font size</li>
+      <li>Tables, task lists and links</li>
+      <li>Export to PDF</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.fchevitarese.MdEditor.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/fchevitarese/md-editor/main/screenshots/editor.png</image>
+      <caption>Editing a document in WYSIWYG mode</caption>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://github.com/fchevitarese/md-editor</url>
+  <url type="bugtracker">https://github.com/fchevitarese/md-editor/issues</url>
+  <url type="vcs-browser">https://github.com/fchevitarese/md-editor</url>
+
+  <content_rating type="oars-1.1"/>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#dbe8f2</color>
+    <color type="primary" scheme_preference="dark">#1c2a38</color>
+  </branding>
+
+  <releases>
+    <release version="0.3.0" date="2026-07-27">
+      <description>
+        <p>Reopen recently closed tabs with Ctrl+Shift+T.</p>
+      </description>
+    </release>
+    <release version="0.2.0" date="2026-07-06">
+      <description>
+        <p>Open external links in the system browser and fix minimap scrolling.</p>
+      </description>
+    </release>
+    <release version="0.1.0" date="2026-06-29">
+      <description>
+        <p>First release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

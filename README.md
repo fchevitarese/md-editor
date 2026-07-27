@@ -33,7 +33,7 @@ Download the `.exe` installer, `.msi`, or the portable `md-editor.exe` from [Rel
 ### Flatpak (coming soon)
 
 ```bash
-flatpak install flathub com.fred.md-editor
+flatpak install flathub io.github.fchevitarese.MdEditor
 ```
 
 ## Features

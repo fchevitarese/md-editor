@@ -1,5 +1,5 @@
 ---
-id: com.fred.md-editor
+id: io.github.fchevitarese.MdEditor
 
 runtime: org.gnome.Platform
 runtime-version: '50'
@@ -18,8 +18,10 @@ finish-args:
   - --socket=fallback-x11
   - --share=ipc
   - --device=dri
-  - --filesystem=host
-  - --talk-name=org.kde.StatusNotifierWatcher
+  # Markdown files and project folders live anywhere under $HOME. The file
+  # chooser goes through the XDG portal, but the folder sidebar reads the
+  # tree directly, which the document portal does not cover.
+  - --filesystem=home
 
 cleanup:
   - /include
@@ -43,17 +45,18 @@ modules:
         LC_ALL: C.utf8
 
     sources:
-      - type: dir
-        path: ..
+      # Flathub requires a pinned, reproducible source. For a local test
+      # build, swap this block for:  - type: dir / path: ..
+      - type: git
+        url: https://github.com/fchevitarese/md-editor.git
+        tag: v0.3.0
+        commit: FILL_WITH_TAG_SHA
 
+      # Generated with flatpak-builder-tools, regenerate on every dependency bump:
+      #   flatpak-node-generator npm package-lock.json -o flatpak/node-sources.json
+      #   python3 flatpak-cargo-generator.py src-tauri/Cargo.lock -o flatpak/cargo-sources.json
       - node-sources.json
       - cargo-sources.json
-
-      - type: file
-        path: com.fred.md-editor.desktop
-
-      - type: file
-        path: com.fred.md-editor.metainfo.xml
 
     build-commands:
       - npm ci --offline
@@ -72,6 +75,8 @@ modules:
           mv /app/share/icons/hicolor/256x256@2 /app/share/icons/hicolor/256x256
         fi
 
-      - install -Dm644 com.fred.md-editor.desktop /app/share/applications/com.fred.md-editor.desktop
-      - install -Dm644 com.fred.md-editor.metainfo.xml /app/share/metainfo/com.fred.md-editor.metainfo.xml
-      - install -Dm644 LICENSE /app/share/licenses/com.fred.md-editor/LICENSE
+      - install -Dm644 flatpak/io.github.fchevitarese.MdEditor.desktop
+        /app/share/applications/io.github.fchevitarese.MdEditor.desktop
+      - install -Dm644 flatpak/io.github.fchevitarese.MdEditor.metainfo.xml
+        /app/share/metainfo/io.github.fchevitarese.MdEditor.metainfo.xml
+      - install -Dm644 LICENSE /app/share/licenses/io.github.fchevitarese.MdEditor/LICENSE
