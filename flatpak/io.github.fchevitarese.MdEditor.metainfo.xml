@@ -52,7 +52,7 @@
   </branding>
 
   <releases>
-    <release version="0.3.0" date="2026-07-27">
+    <release version="0.3.1" date="2026-07-27">
       <description>
         <p>Reopen recently closed tabs with Ctrl+Shift+T.</p>
       </description>
