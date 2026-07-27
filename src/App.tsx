@@ -19,6 +19,8 @@ interface Preferences {
   show_minimap: boolean;
 }
 
+const MAX_CLOSED_TABS = 10;
+
 export default function App() {
   const [tabs, setTabs] = useState<Tab[]>(() => [makeTab(null, "", "Untitled.md")]);
   const [activeTabId, setActiveTabId] = useState<string>(tabs[0].id);
@@ -27,6 +29,8 @@ export default function App() {
   const [prefs, setPrefs] = useState<Preferences>({ font_size: 16, show_minimap: true });
   const sessionSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const osFileOpened = useRef(false);
+  // Stack of recently closed tabs for Ctrl+Shift+T (most recent last, capped)
+  const closedTabs = useRef<{ tab: Tab; index: number }[]>([]);
 
   // Ref to avoid stale closures in loadFile without recreating it on every tabs change
   const tabsRef = useRef(tabs);
@@ -94,6 +98,13 @@ export default function App() {
     console.log("[md-editor] closeTab:", tabId, "activeTabId:", currentActiveId, "tabsLength:", currentTabs.length);
     const replacementTab = makeTab(null, "", "Untitled.md");
 
+    const closing = currentTabs.find((t) => t.id === tabId);
+    // Don't remember pristine untitled tabs — nothing to restore
+    if (closing && (closing.filePath || closing.content !== "" || closing.dirty)) {
+      closedTabs.current.push({ tab: closing, index: currentTabs.indexOf(closing) });
+      if (closedTabs.current.length > MAX_CLOSED_TABS) closedTabs.current.shift();
+    }
+
     let nextActiveId: string;
     if (currentTabs.length === 1) {
       nextActiveId = replacementTab.id;
@@ -113,6 +124,35 @@ export default function App() {
       return prev.filter((t) => t.id !== tabId);
     });
     setActiveTabId(nextActiveId);
+  }, []);
+
+  const reopenClosedTab = useCallback(() => {
+    const entry = closedTabs.current.pop();
+    if (!entry) {
+      console.log("[md-editor] reopenClosedTab: nothing to reopen");
+      return;
+    }
+    const { tab, index } = entry;
+    console.log("[md-editor] reopenClosedTab:", tab.fileName, "at index", index);
+
+    // Already reopened by other means (e.g. sidebar click) — just focus it
+    const existing = tabsRef.current.find((t) => t.filePath && t.filePath === tab.filePath);
+    if (existing) {
+      setActiveTabId(existing.id);
+      return;
+    }
+
+    setTabs((prev) => {
+      // Replace a lone pristine untitled tab instead of stacking next to it
+      const last = prev[prev.length - 1];
+      if (prev.length === 1 && !last.filePath && last.content === "" && !last.dirty) {
+        return [tab];
+      }
+      const next = [...prev];
+      next.splice(Math.min(index, next.length), 0, tab);
+      return next;
+    });
+    setActiveTabId(tab.id);
   }, []);
 
   const handleContentChange = useCallback((tabId: string, content: string) => {
@@ -267,9 +307,13 @@ export default function App() {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey && !e.shiftKey && e.key === "o") { e.preventDefault(); handleOpenFile(); }
       if (e.ctrlKey && e.shiftKey && e.key === "O") { e.preventDefault(); handleOpenFolder(); }
-      if (e.ctrlKey && e.key === "w") {
+      if (e.ctrlKey && !e.shiftKey && e.key === "w") {
         e.preventDefault();
         closeTab(activeTabIdRef.current);
+      }
+      if (e.ctrlKey && e.shiftKey && (e.key === "T" || e.key === "t")) {
+        e.preventDefault();
+        reopenClosedTab();
       }
       if (e.ctrlKey && e.key === "Tab") {
         e.preventDefault();
@@ -287,7 +331,7 @@ export default function App() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [handleOpenFile, handleOpenFolder, closeTab, switchTab]);
+  }, [handleOpenFile, handleOpenFolder, closeTab, switchTab, reopenClosedTab]);
 
   const activeTab = getActiveTab();
   console.log("[md-editor] render: tabs", tabs.length, "activeTabId", activeTabId, "activeTab.fileName", activeTab?.fileName);
